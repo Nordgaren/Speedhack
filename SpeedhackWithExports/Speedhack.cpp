@@ -1,8 +1,10 @@
+#include "pch.h"
 #include "Speedhack.h"
+#include <iostream>
 
 namespace Speedhack
 {
-	double speed = 1.0;
+	float speed = 1.0;
 	bool attatched = false;
 
 	extern _tGetTickCount _GTC = nullptr;
@@ -24,7 +26,7 @@ namespace Speedhack
 		return _GTC64_BaseTime + ((_GTC64() - _GTC64_BaseTime) * speed);
 	}
 
-	DWORD WINAPI _hQueryPerformanceCounter(LARGE_INTEGER * lpPerformanceCount)
+	DWORD WINAPI _hQueryPerformanceCounter(LARGE_INTEGER* lpPerformanceCount)
 	{
 		LARGE_INTEGER x;
 		_QPC(&x);
@@ -32,10 +34,17 @@ namespace Speedhack
 		return TRUE;
 	}
 
-	void Setup()
+	SPEEDHACKWITHEXPORTS_API void Setup()
 	{
 		if (attatched)
 			return;
+
+		//Create a console for Debug output
+		//AllocConsole();
+		//FILE* fstdin = stdin, * fstdout = stdout, * fstderr = stderr;
+		//freopen_s(&fstdin, "CONIN$", "r", stdin);
+		//freopen_s(&fstdout, "CONOUT$", "w", stdout);
+		//freopen_s(&fstderr, "CONOUT$", "w", stderr);
 
 		HMODULE hMod = GetModuleHandle(L"Kernel32.dll");
 
@@ -54,16 +63,16 @@ namespace Speedhack
 		DetourTransactionBegin();
 		DetourUpdateThread(GetCurrentThread());
 
-		DetourAttach(&(PVOID &)_GTC, _hGetTickCount);
-		DetourAttach(&(PVOID &)_GTC64, _hGetTickCount64);
-		DetourAttach(&(PVOID &)_QPC, _hQueryPerformanceCounter);
-		
+		DetourAttach(&(PVOID&)_GTC, _hGetTickCount);
+		DetourAttach(&(PVOID&)_GTC64, _hGetTickCount64);
+		DetourAttach(&(PVOID&)_QPC, _hQueryPerformanceCounter);
+
 		DetourTransactionCommit();
 
 		attatched = true;
 	}
 
-	void Detach()
+	SPEEDHACKWITHEXPORTS_API void Detach()
 	{
 		if (!attatched)
 			return;
@@ -71,16 +80,16 @@ namespace Speedhack
 		DetourTransactionBegin();
 		DetourUpdateThread(GetCurrentThread());
 
-		DetourDetach(&(PVOID &)_GTC, _hGetTickCount);
-		DetourDetach(&(PVOID &)_GTC64, _hGetTickCount64);
-		DetourDetach(&(PVOID &)_QPC, _hQueryPerformanceCounter);
+		DetourDetach(&(PVOID&)_GTC, _hGetTickCount);
+		DetourDetach(&(PVOID&)_GTC64, _hGetTickCount64);
+		DetourDetach(&(PVOID&)_QPC, _hQueryPerformanceCounter);
 
 		DetourTransactionCommit();
 
 		attatched = false;
 	}
 
-	void SetSpeed(float relSpeed)
+	SPEEDHACKWITHEXPORTS_API void SetSpeed(float* relSpeed)
 	{
 		if (attatched)
 		{
@@ -89,6 +98,6 @@ namespace Speedhack
 			_hQueryPerformanceCounter(&_QPC_BaseTime);
 		}
 
-		speed = relSpeed;
+		speed = *relSpeed;
 	}
 }
