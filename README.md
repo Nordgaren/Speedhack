@@ -1,4 +1,6 @@
 # Speedhack
+Fork of [Speedhack](https://github.com/absoIute/Speedhack) by [absoIute](https://github.com/absoIute)
+
 Lightweight speedhacking source.
 A "speedhack" is a way of manipulating the time of a program, usually used in games, it can slow down, speed up or even hault an entire program.
 
