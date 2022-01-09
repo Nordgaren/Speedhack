@@ -17,15 +17,15 @@ Once you have injected it into another program, you can call the setup and detac
             var setupOffset = Kernel32.GetProcAddress(lib, "Setup").ToInt64() - lib.ToInt64();
             var setSpeedOffset = Kernel32.GetProcAddress(lib, "SetSpeed").ToInt64() - lib.ToInt64();
             var detachOffset = Kernel32.GetProcAddress(lib, "Detach").ToInt64() - lib.ToInt64();
-            SetupPtr = (IntPtr)setupOffset;
-            SetSpeedPtr = (IntPtr)setSpeedOffset;
-            DetachPtr = (IntPtr)detachOffset;
+            SetupPtrOffset = (IntPtr)setupOffset;
+            SetSpeedPtrOffset = (IntPtr)setSpeedOffset;
+            DetachPtrOffset = (IntPtr)detachOffset;
             Free(lib);
         }
 	
 	public void SetSpeed(float value)
         {
-            IntPtr setSpeed = (IntPtr)(SpeedhackDllPtr.ToInt64() + SetSpeedPtr.ToInt64());
+            IntPtr setSpeed = (IntPtr)(SpeedhackDllPtr.ToInt64() + SetSpeedPtrOffset.ToInt64());
             IntPtr valueAddress = GetPrefferedIntPtr(sizeof(float), SpeedhackDllPtr);
             Kernel32.WriteBytes(Handle, valueAddress, BitConverter.GetBytes(value));
             var thread = Kernel32.CreateRemoteThread(Handle, IntPtr.Zero, 0, setSpeed, valueAddress, 0, IntPtr.Zero);
