@@ -10,34 +10,26 @@
 
 namespace Speedhack
 {
-	extern float speed;
-	extern bool attatched;
+	extern double speed;
+	extern bool initialised;
 
 	typedef DWORD(WINAPI* _tGetTickCount)(void);
 	extern _tGetTickCount _GTC;
-	extern DWORD _GTC_BaseTime;
+	extern DWORD _GTC_BaseTime, _GTC_OffsetTime;
 
 	typedef ULONGLONG(WINAPI* _tGetTickCount64)(void);
 	extern _tGetTickCount64 _GTC64;
-	extern DWORD _GTC64_BaseTime;
+	extern ULONGLONG _GTC64_BaseTime, _GTC64_OffsetTime;
 
 	typedef BOOL(WINAPI* _tQueryPerformanceCounter)(LARGE_INTEGER*);
 	extern _tQueryPerformanceCounter _QPC;
-	extern LARGE_INTEGER _QPC_BaseTime;
-
+	extern LARGE_INTEGER _QPC_BaseTime, _QPC_OffsetTime;
 
 	DWORD WINAPI _hGetTickCount();
-
-	DWORD WINAPI _hGetTickCount64();
-
-	DWORD WINAPI _hQueryPerformanceCounter(LARGE_INTEGER* lpPerformanceCount);
-
+	ULONGLONG WINAPI _hGetTickCount64();
+	BOOL WINAPI _hQueryPerformanceCounter(LARGE_INTEGER* lpPerformanceCount);
 
 	extern "C" SPEEDHACKWITHEXPORTS_API void Setup();
-	
 	extern "C" SPEEDHACKWITHEXPORTS_API void Detach();
-
-	extern "C" SPEEDHACKWITHEXPORTS_API void SetSpeed(float* relSpeed);
-
-	void SetSpeed(float* relSpeed);
+	extern "C" SPEEDHACKWITHEXPORTS_API void SetSpeed(double* relSpeed);
 }

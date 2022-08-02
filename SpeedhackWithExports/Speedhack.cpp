@@ -4,61 +4,49 @@
 
 namespace Speedhack
 {
-	float speed = 1.0;
-	bool attatched = false;
+	double speed = 1.0;
+	bool initialised = false;
 
-	extern _tGetTickCount _GTC = nullptr;
-	extern DWORD _GTC_BaseTime = 0;
+	_tGetTickCount _GTC = nullptr;
+	DWORD _GTC_BaseTime = 0, _GTC_OffsetTime = 0;
 
-	extern _tGetTickCount64 _GTC64 = nullptr;
-	extern DWORD _GTC64_BaseTime = 0;
+	_tGetTickCount64 _GTC64 = nullptr;
+	ULONGLONG _GTC64_BaseTime = 0, _GTC64_OffsetTime = 0;
 
-	extern _tQueryPerformanceCounter _QPC = nullptr;
-	extern LARGE_INTEGER _QPC_BaseTime = LARGE_INTEGER();
+	_tQueryPerformanceCounter _QPC = nullptr;
+	LARGE_INTEGER _QPC_BaseTime = LARGE_INTEGER(), _QPC_OffsetTime = LARGE_INTEGER();
 
 	DWORD WINAPI _hGetTickCount()
 	{
-		return _GTC_BaseTime + ((_GTC() - _GTC_BaseTime) * speed);
+		return _GTC_OffsetTime + ((_GTC() - _GTC_BaseTime) * speed);
 	}
 
-	DWORD WINAPI _hGetTickCount64()
+	ULONGLONG WINAPI _hGetTickCount64()
 	{
-		return _GTC64_BaseTime + ((_GTC64() - _GTC64_BaseTime) * speed);
+		return _GTC64_OffsetTime + ((_GTC64() - _GTC64_BaseTime) * speed);
 	}
 
-	DWORD WINAPI _hQueryPerformanceCounter(LARGE_INTEGER* lpPerformanceCount)
+	BOOL WINAPI _hQueryPerformanceCounter(LARGE_INTEGER* lpPerformanceCount)
 	{
 		LARGE_INTEGER x;
 		_QPC(&x);
-		lpPerformanceCount->QuadPart = _QPC_BaseTime.QuadPart + ((x.QuadPart - _QPC_BaseTime.QuadPart) * speed);
+		lpPerformanceCount->QuadPart = _QPC_OffsetTime.QuadPart + ((x.QuadPart - _QPC_BaseTime.QuadPart) * speed);
 		return TRUE;
 	}
 
 	SPEEDHACKWITHEXPORTS_API void Setup()
 	{
-		if (attatched)
-			return;
-
-		//Create a console for Debug output
-		//AllocConsole();
-		//FILE* fstdin = stdin, * fstdout = stdout, * fstderr = stderr;
-		//freopen_s(&fstdin, "CONIN$", "r", stdin);
-		//freopen_s(&fstdout, "CONOUT$", "w", stdout);
-		//freopen_s(&fstderr, "CONOUT$", "w", stderr);
-
-		HMODULE hMod = GetModuleHandle(L"Kernel32.dll");
-
-		if (!hMod)
-			return;
-
-		_GTC = (_tGetTickCount)GetProcAddress(hMod, "GetTickCount");
+		_GTC = &GetTickCount;
 		_GTC_BaseTime = _GTC();
+		_GTC_OffsetTime = _GTC_BaseTime;
 
-		_GTC64 = (_tGetTickCount64)GetProcAddress(hMod, "GetTickCount64");
+		_GTC64 = &GetTickCount64;
 		_GTC64_BaseTime = _GTC64();
+		_GTC64_OffsetTime = _GTC64_BaseTime;
 
-		_QPC = (_tQueryPerformanceCounter)GetProcAddress(hMod, "QueryPerformanceCounter");
+		_QPC = &QueryPerformanceCounter;
 		_QPC(&_QPC_BaseTime);
+		_QPC_OffsetTime.QuadPart = _QPC_BaseTime.QuadPart;
 
 		DetourTransactionBegin();
 		DetourUpdateThread(GetCurrentThread());
@@ -69,14 +57,11 @@ namespace Speedhack
 
 		DetourTransactionCommit();
 
-		attatched = true;
+		initialised = true;
 	}
 
 	SPEEDHACKWITHEXPORTS_API void Detach()
 	{
-		if (!attatched)
-			return;
-
 		DetourTransactionBegin();
 		DetourUpdateThread(GetCurrentThread());
 
@@ -86,16 +71,21 @@ namespace Speedhack
 
 		DetourTransactionCommit();
 
-		attatched = false;
+		initialised = false;
 	}
 
-	SPEEDHACKWITHEXPORTS_API void SetSpeed(float* relSpeed)
+	SPEEDHACKWITHEXPORTS_API void SetSpeed(double* relSpeed)
 	{
-		if (attatched)
+		if (initialised)
 		{
-			_GTC_BaseTime = _hGetTickCount();
-			_GTC64_BaseTime = _hGetTickCount64();
-			_hQueryPerformanceCounter(&_QPC_BaseTime);
+			_GTC_OffsetTime = _hGetTickCount();
+			_GTC_BaseTime = _GTC();
+
+			_GTC64_OffsetTime = _hGetTickCount64();
+			_GTC64_BaseTime = _GTC64();
+
+			_hQueryPerformanceCounter(&_QPC_OffsetTime);
+			_QPC(&_QPC_BaseTime);
 		}
 
 		speed = *relSpeed;
